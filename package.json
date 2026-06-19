@@ -2,12 +2,12 @@
   "name": "coffee-tracker",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": "24.x"
   },
   "keywords": [],
   "author": "",
