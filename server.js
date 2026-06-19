@@ -107,7 +107,8 @@ app.post('/api/prices', requireApiKey, (req, res) => {
 });
 
 // ── SPA fallback ──────────────────────────────────────────────────
-app.get('*', (req, res) => {
+// ── SPA fallback ──────────────────────────────────────────────────
+app.get('/(.*)', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
