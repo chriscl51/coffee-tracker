@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☕ 阮愛啉咖啡</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep:    #FAF5EC;
+            --bg-card:    #FFFFFF;
+            --bg-panel:   #F3EAD9;
+            --gold:       #A8763B;
+            --gold-dim:   #8C6845;
+            --green:      #4F7D3C;
+            --green-dim:  #3D6230;
+            --cream:      #2E2013;
+            --cream-dim:  #6B5A45;
+            --border:     rgba(168,118,59,0.20);
+            --border-mid: rgba(168,118,59,0.40);
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--bg-deep);
+            color: var(--cream);
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* ── Header ─────────────────────────────────── */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 32px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+        .logo {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--cream);
+            letter-spacing: 0.02em;
+        }
+        .logo-sub {
+            font-size: 13px;
+            color: var(--cream-dim);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .live-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--cream-dim);
+            letter-spacing: 0.04em;
+        }
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── Main layout ─────────────────────────────── */
+        .main {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 0;
+            min-height: calc(100vh - 61px);
+        }
+
+        /* ── Left sidebar ────────────────────────────── */
+        .sidebar {
+            border-right: 1px solid var(--border);
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: var(--bg-panel);
+        }
+        .sidebar-section-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+            margin-bottom: 10px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .control-label {
+            font-size: 13px;
+            color: var(--cream-dim);
+            letter-spacing: 0.03em;
+        }
+        select, input[type="date"] {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 6px;
+            color: var(--cream);
+            padding: 10px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        select:focus, input[type="date"]:focus {
+            border-color: var(--gold);
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238C6845' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 30px;
+        }
+        select option {
+            background: #FFFFFF;
+        }
+
+        .sidebar-divider {
+            border: none;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 最新快訊 */
+        .latest-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .latest-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .latest-row:last-child { border-bottom: none; }
+        .latest-name {
+            font-size: 13px;
+            color: var(--cream-dim);
+            max-width: 120px;
+            line-height: 1.3;
+        }
+        .latest-price {
+            font-size: 16px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .latest-price.gold { color: var(--gold); }
+        .latest-price.green { color: var(--green); }
+        .latest-date {
+            font-size: 12px;
+            color: var(--cream-dim);
+            opacity: 0.75;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        /* ── Right content area ──────────────────────── */
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* Top two cards */
+        .top-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid var(--border);
+        }
+        .stat-card {
+            padding: 28px 32px;
+            border-right: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:last-child { border-right: none; }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+        }
+        .stat-card.futures::before { background: linear-gradient(90deg, var(--gold), transparent); }
+        .stat-card.retail::before  { background: linear-gradient(90deg, var(--green), transparent); }
+        .stat-eyebrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .stat-eyebrow .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+        }
+        .stat-eyebrow.gold-label { color: var(--gold); }
+        .stat-eyebrow.green-label { color: var(--green); }
+        .stat-eyebrow .dot.gold { background: var(--gold); }
+        .stat-eyebrow .dot.green { background: var(--green); }
+        .stat-value {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .stat-value.gold { color: var(--gold); }
+        .stat-value.green { color: var(--green); }
+        .stat-unit {
+            font-size: 13px;
+            color: var(--cream-dim);
+            margin-bottom: 12px;
+        }
+        .stat-meta {
+            font-size: 13px;
+            color: var(--cream-dim);
+            opacity: 0.85;
+        }
+        .stat-bg-label {
+            position: absolute;
+            right: 24px;
+            bottom: 16px;
+            font-family: 'Playfair Display', serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            opacity: 0.05;
+            line-height: 1;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* ── Chart area ──────────────────────────────── */
+        .chart-section {
+            flex: 1;
+            padding: 28px 32px;
+        }
+        .chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--cream);
+        }
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--cream-dim);
+        }
+        .legend-line {
+            width: 20px;
+            height: 2px;
+            border-radius: 1px;
+        }
+        .chart-insight {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(168,118,59,0.08);
+            border: 1px solid rgba(168,118,59,0.25);
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: var(--cream-dim);
+            line-height: 1.6;
+        }
+        .chart-insight .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .chart-wrap {
+            position: relative;
+            height: 320px;
+        }
+        canvas { max-height: 320px; }
+
+        /* ── Table section ───────────────────────────── */
+        .table-section {
+            border-top: 1px solid var(--border);
+            padding: 20px 32px 28px;
+        }
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .table-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--gold-dim);
+        }
+        .record-count {
+            font-size: 13px;
+            color: var(--cream-dim);
+            opacity: 0.7;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--cream-dim);
+            opacity: 0.7;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr {
+            border-bottom: 1px solid rgba(168,118,59,0.12);
+            transition: background 0.15s;
+        }
+        tbody tr:hover { background: rgba(168,118,59,0.06); }
+        tbody td {
+            padding: 11px 10px;
+            font-size: 14px;
+            color: var(--cream-dim);
+        }
+        tbody td:last-child {
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--cream);
+        }
+        .source-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+        }
+        .source-pill.futures-pill {
+            background: rgba(168,118,59,0.15);
+            color: var(--gold);
+        }
+        .source-pill.retail-pill {
+            background: rgba(79,125,60,0.15);
+            color: var(--green);
+        }
+
+        /* ── Loading & empty states ──────────────────── */
+        .loading-state, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--cream-dim);
+            opacity: 0.7;
+            font-size: 15px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid var(--border);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+            .main { grid-template-columns: 1fr; }
+            .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+            .top-cards { grid-template-columns: 1fr; }
+            .stat-card { border-right: none; border-bottom: 1px solid var(--border); }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <span class="logo-title">☕ 阮愛啉咖啡</span>
+        <span class="logo-sub">Coffee Market Insights</span>
+    </div>
+    <div class="header-right">
+        <div class="live-badge">
+            <span class="live-dot"></span>
+            <span id="lastUpdateTime">載入中…</span>
+        </div>
+    </div>
+</header>
+
+<div class="main">
+    <!-- ── Left sidebar ── -->
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-section-label">篩選條件</div>
+
+            <div class="control-group">
+                <span class="control-label">商品 / 合約</span>
+                <select id="productSelect" onchange="onFilterChange()">
+                    <option value="all">全部</option>
+                    <option value="futures">期貨 — ICE KC 阿拉比卡</option>
+                    <option value="retail">零售 — 星巴克黃金烘焙豆</option>
+                </select>
+            </div>
+
+            <div class="control-group" style="margin-top:14px;">
+                <span class="control-label">起始日期</span>
+                <input type="date" id="dateFrom" onchange="onFilterChange()">
+            </div>
+
+            <div class="control-group" style="margin-top:10px;">
+                <span class="control-label">結束日期</span>
+                <input type="date" id="dateTo" onchange="onFilterChange()">
+            </div>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <div>
+            <div class="sidebar-section-label">最新快訊</div>
+            <div class="latest-card" id="latestCard">
+                <div class="loading-state"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── Right content ── -->
+    <div class="content">
+        <!-- Top stat cards -->
+        <div class="top-cards">
+            <div class="stat-card futures">
+                <div class="stat-eyebrow gold-label">
+                    <span class="dot gold"></span>國際期貨
+                </div>
+                <div class="stat-value gold" id="futuresPrice">—</div>
+                <div class="stat-unit">美分 / 磅 · ICE KC 近月合約</div>
+                <div class="stat-meta" id="futuresDate">最新資料：—</div>
+                <div class="stat-bg-label">KC</div>
+            </div>
+            <div class="stat-card retail">
+                <div class="stat-eyebrow green-label">
+                    <span class="dot green"></span>台灣零售
+                </div>
+                <div class="stat-value green" id="retailPrice">—</div>
+                <div class="stat-unit">新台幣 / 包 · 黃金烘焙星巴克烘焙豆</div>
+                <div class="stat-meta" id="retailDate">最新資料：—</div>
+                <div class="stat-bg-label">NTD</div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <div class="chart-title">18 個月價格趨勢</div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <div class="legend-line" style="background:var(--gold);"></div>
+                        <span>期貨 (左軸 / 美分)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line" style="background:var(--green);"></div>
+                        <span>零售 (右軸 / NTD)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-insight">
+                <span class="icon">💡</span>
+                <span>期貨價格通常領先零售價格 <strong>3–6 個月</strong>：當 ICE KC 合約上漲，供應鏈成本隨後傳導，末端零售才反映漲幅。觀察兩線的走勢差距，可預測未來的咖啡豆零售價格方向。</span>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <span class="table-title">歷史紀錄</span>
+                <span class="record-count" id="recordCount">—</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>名稱</th>
+                        <th>來源</th>
+                        <th>價格</th>
+                    </tr>
+                </thead>
+                <tbody id="priceTable">
+                    <tr><td colspan="4"><div class="loading-state"><div class="spinner"></div><br>載入中…</div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── API 端點自動判斷 ────────────────────────────────────────────
+const API_BASE = (location.port === '5500' || location.port === '5501')
+    ? 'http://localhost:3000'
+    : '';
+
+// ── 全域狀態 ────────────────────────────────────────────────────
+let allData = [];
+let chartInstance = null;
+
+// ── 初始化日期範圍（預設 18 個月）─────────────────────────────
+function initDateRange() {
+    const today = new Date();
+    const from = new Date(today);
+    from.setMonth(from.getMonth() - 18);
+
+    document.getElementById('dateTo').value   = today.toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
+}
+
+// ── 分類資料 ────────────────────────────────────────────────────
+function isFutures(row) {
+    const s = (row.source || '').toUpperCase();
+    const n = (row.name   || '').toUpperCase();
+    return s.includes('ICE') || s.includes('BARCHART') || n.includes('KC') || n.includes('ARABICA') || n.includes('FUTURES');
+}
+function isRetail(row) {
+    return !isFutures(row);
+}
+
+// ── 篩選邏輯 ────────────────────────────────────────────────────
+function getFilteredData() {
+    const product  = document.getElementById('productSelect').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo   = document.getElementById('dateTo').value;
+
+    return allData.filter(row => {
+        if (product === 'futures' && !isFutures(row)) return false;
+        if (product === 'retail'  && !isRetail(row))  return false;
+        if (dateFrom && row.date < dateFrom) return false;
+        if (dateTo   && row.date > dateTo)   return false;
+        return true;
+    });
+}
+
+// ── 最新快訊 ────────────────────────────────────────────────────
+function renderLatest() {
+    const futuresData = [...allData].filter(isFutures).sort((a,b) => b.date.localeCompare(a.date));
+    const retailData  = [...allData].filter(isRetail) .sort((a,b) => b.date.localeCompare(a.date));
+    const latestF = futuresData[0];
+    const latestR = retailData[0];
+
+    // 更新頂部 stat cards
+    if (latestF) {
+        document.getElementById('futuresPrice').textContent = Number(latestF.price).toFixed(2);
+        document.getElementById('futuresDate').textContent  = `最新資料：${latestF.date}`;
+    }
+    if (latestR) {
+        document.getElementById('retailPrice').textContent = Number(latestR.price).toLocaleString();
+        document.getElementById('retailDate').textContent  = `最新資料：${latestR.date}`;
+    }
+
+    // 側邊欄快訊
+    const card = document.getElementById('latestCard');
+    let html = '';
+    if (latestF) {
+        html += `
+        <div class="latest-row">
+            <div>
+                <div class="latest-name">ICE KC 近月</div>
+                <div class="latest-date">${latestF.date}</div>
+            </div>
+            <div>
+                <div class="latest-price gold">${Number(latestF.price).toFixed(2)}</div>
+                <div class="latest-date" style="text-align:right;">美分/磅</div>
+            </div>
+        </div>`;
+    }
+    if (latestR) {
+        html += `
+        <div class="latest-row">
+            <div>
+                <div class="latest-name">星巴克烘焙豆</div>
+                <div class="latest-date">${latestR.date}</div>
+            </div>
+            <div>
+                <div class="latest-price green">NT$ ${Number(latestR.price).toLocaleString()}</div>
+                <div class="latest-date" style="text-align:right;">/ 包</div>
+            </div>
+        </div>`;
+    }
+    card.innerHTML = html || '<div class="empty-state">尚無資料</div>';
+
+    // 頁首時間
+    const allDates = allData.map(r => r.date).sort().reverse();
+    if (allDates[0]) {
+        document.getElementById('lastUpdateTime').textContent = `最後更新 ${allDates[0]}`;
+    }
+}
+
+// ── 折線圖（雙Y軸）──────────────────────────────────────────────
+function renderChart(filtered) {
+    const futuresRows = filtered.filter(isFutures).sort((a,b) => a.date.localeCompare(b.date));
+    const retailRows  = filtered.filter(isRetail) .sort((a,b) => a.date.localeCompare(b.date));
+
+    const futuresPts = futuresRows.map(r => ({ x: r.date, y: Number(r.price) }));
+    const retailPts  = retailRows .map(r => ({ x: r.date, y: Number(r.price) }));
+
+    const ctx = document.getElementById('trendChart').getContext('2d');
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: '期貨 (美分/磅)',
+                    data: futuresPts,
+                    borderColor: '#A8763B',
+                    backgroundColor: 'rgba(168,118,59,0.10)',
+                    pointBackgroundColor: '#A8763B',
+                    pointRadius: futuresPts.length > 30 ? 2 : 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    tension: 0.35,
+                    fill: true,
+                    yAxisID: 'yFutures',
+                },
+                {
+                    label: '零售 (NTD/包)',
+                    data: retailPts,
+                    borderColor: '#4F7D3C',
+                    backgroundColor: 'rgba(79,125,60,0.10)',
+                    pointBackgroundColor: '#4F7D3C',
+                    pointRadius: retailPts.length > 30 ? 2 : 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 2.5,
+                    tension: 0.35,
+                    fill: true,
+                    yAxisID: 'yRetail',
+                },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#3A2A1C',
+                    borderColor: 'rgba(168,118,59,0.4)',
+                    borderWidth: 1,
+                    titleColor: '#FAF5EC',
+                    bodyColor: '#E5D9C5',
+                    padding: 12,
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        title: items => items[0]?.label || '',
+                        label: item => {
+                            if (item.datasetIndex === 0)
+                                return `  期貨: ${Number(item.raw.y).toFixed(2)} 美分/磅`;
+                            else
+                                return `  零售: NT$ ${Number(item.raw.y).toLocaleString()} / 包`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: 'month', tooltipFormat: 'yyyy-MM-dd', displayFormats: { month: 'yy/MM' } },
+                    grid: { color: 'rgba(168,118,59,0.10)' },
+                    ticks: { color: '#6B5A45', font: { size: 12 } },
+                    border: { color: 'rgba(168,118,59,0.25)' },
+                },
+                yFutures: {
+                    type: 'linear',
+                    position: 'left',
+                    grid: { color: 'rgba(168,118,59,0.10)' },
+                    ticks: { color: '#A8763B', font: { size: 12 }, callback: v => v.toFixed(0) },
+                    border: { color: 'rgba(168,118,59,0.25)' },
+                    title: { display: true, text: '美分/磅', color: '#8C6845', font: { size: 12 } }
+                },
+                yRetail: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: { color: '#4F7D3C', font: { size: 12 }, callback: v => 'NT$' + v.toLocaleString() },
+                    border: { color: 'rgba(79,125,60,0.25)' },
+                    title: { display: true, text: 'NTD / 包', color: '#3D6230', font: { size: 12 } }
+                }
+            }
+        }
+    });
+}
+
+// ── 資料表格 ────────────────────────────────────────────────────
+function renderTable(filtered) {
+    const tbody = document.getElementById('priceTable');
+    document.getElementById('recordCount').textContent = `${filtered.length} 筆`;
+
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">此條件下無資料</div></td></tr>';
+        return;
+    }
+
+    const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+    let html = '';
+    sorted.forEach(row => {
+        const futures = isFutures(row);
+        const priceStr = futures
+            ? `${Number(row.price).toFixed(2)} <small style="opacity:.7;font-size:12px;">¢/lb</small>`
+            : `NT$ ${Number(row.price).toLocaleString()}`;
+        const pillClass = futures ? 'futures-pill' : 'retail-pill';
+        const sourceTxt = futures ? (row.source || 'Barchart') : (row.source || 'Daybuy');
+        html += `<tr>
+            <td>${row.date}</td>
+            <td style="color:var(--cream); max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escHtml(row.name)}">${escHtml(row.name)}</td>
+            <td><span class="source-pill ${pillClass}">${escHtml(sourceTxt)}</span></td>
+            <td>${priceStr}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 主要資料抓取 ────────────────────────────────────────────────
+async function loadData() {
+    try {
+        const res = await fetch(`${API_BASE}/api/prices?t=${Date.now()}`);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        allData = await res.json();
+        renderLatest();
+        onFilterChange();
+    } catch (err) {
+        console.error('載入失敗', err);
+        document.getElementById('priceTable').innerHTML =
+            '<tr><td colspan="4"><div class="empty-state" style="color:#c0392b;">讀取資料失敗 — 請確認 coffee-tracker 伺服器已啟動 (port 3000)</div></td></tr>';
+        document.getElementById('latestCard').innerHTML =
+            '<div class="empty-state" style="font-size:11px;">無法連線</div>';
+    }
+}
+
+function onFilterChange() {
+    const filtered = getFilteredData();
+    renderChart(filtered);
+    renderTable(filtered);
+}
+
+// ── 啟動 ────────────────────────────────────────────────────────
+initDateRange();
+loadData();
+</script>
+
+</body>
+</html>
