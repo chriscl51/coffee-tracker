@@ -860,7 +860,12 @@ function renderTable(filtered) {
         return;
     }
 
-    const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+    // Sort: latest date first; same-date rows ordered by id DESC (newest entry on top)
+    const sorted = [...filtered].sort((a, b) => {
+        const dateCmp = b.date.localeCompare(a.date);
+        if (dateCmp !== 0) return dateCmp;
+        return (b.id || 0) - (a.id || 0);
+    });
     let html = '';
     sorted.forEach(row => {
         const futures = isFutures(row);
@@ -900,6 +905,10 @@ async function loadData() {
         const res = await fetch(`${API_BASE}/api/prices?t=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         allData = await res.json();
+        // Always sync dateTo to today so entries with today's date are never excluded
+        const today = new Date().toISOString().split('T')[0];
+        const dateToEl = document.getElementById('dateTo');
+        if (dateToEl && dateToEl.value < today) dateToEl.value = today;
         renderLatest();
         onFilterChange();
     } catch (err) {
