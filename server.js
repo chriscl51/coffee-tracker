@@ -3,14 +3,28 @@ const express = require('express');
 const cors    = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const path    = require('path');
+const fs      = require('fs');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 // ── 資料庫路徑 ────────────────────────────────────────────────────
-// Azure 環境（WEBSITE_SITE_NAME 有值）存到 /home 持久磁碟；
+// Azure 環境（WEBSITE_SITE_NAME 有値）存到 /home 持久磁碟；
 // 本機開發則存在專案根目錄。
-const dbPath = process.env.WEBSITE_SITE_NAME ? '/home/data.db' : './data.db';
+const isAzure = !!process.env.WEBSITE_SITE_NAME;
+const dbDir   = isAzure ? '/home' : __dirname;
+const dbPath  = path.join(dbDir, 'data.db');
+
+// Ensure the directory exists (guards against Azure edge cases)
+if (isAzure) {
+    try {
+        fs.mkdirSync(dbDir, { recursive: true });
+    } catch (e) { /* already exists */ }
+    if (!process.env.WEBSITES_ENABLE_APP_SERVICE_STORAGE) {
+        console.warn('⚠️  WEBSITES_ENABLE_APP_SERVICE_STORAGE 未設定！/home 可能是暫時的，資料會在重啟後消失。');
+        console.warn('⚠️  請在 Azure Portal > 應用程序設定 > 應用程序設定中新增 WEBSITES_ENABLE_APP_SERVICE_STORAGE = true');
+    }
+}
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {

@@ -668,9 +668,14 @@ function isFutures(row) {
 function isRetail(row) {
     return !isFutures(row);
 }
+// Known scraper sources — anything else is treated as a manual/user entry
+const SCRAPER_SOURCES = ['barchart', 'daybuy', 'yahoo finance', 'ice', 'barchart.com'];
 function isManual(row) {
-    const s = (row.source || '').toLowerCase();
-    return s.includes('手動') || s.includes('manual') || s === '未指定' && !isFutures(row);
+    const s = (row.source || '').toLowerCase().trim();
+    if (!s || s === '未指定') return !isFutures(row);
+    if (s.includes('手動') || s.includes('manual')) return true;
+    // If source doesn't match any known scraper, treat as manual
+    return !SCRAPER_SOURCES.some(k => s.includes(k));
 }
 
 // ── 篩選邏輯 ────────────────────────────────────────────────────
@@ -943,6 +948,9 @@ async function submitManual(e) {
 
         showFormMsg(`✅ 已新增（ID: ${data.id}）`, 'success');
         document.getElementById('manualForm').reset();
+        // 重設篩選條件為全部，確保新增資料立即可見
+        document.getElementById('productSelect').value = 'all';
+        document.getElementById('sourceSelect').value  = 'all';
         // 重新載入資料
         await loadData();
     } catch (err) {
