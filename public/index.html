@@ -649,14 +649,22 @@ const API_BASE = (location.port === '5500' || location.port === '5501')
 let allData = [];
 let chartInstance = null;
 
+// ── 本地日期字串（避免 toISOString() 回傳 UTC 造成時區偏差）──────
+function localDateStr(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
 // ── 初始化日期範圍（預設 18 個月）─────────────────────────────
 function initDateRange() {
     const today = new Date();
     const from = new Date(today);
     from.setMonth(from.getMonth() - 18);
 
-    document.getElementById('dateTo').value   = today.toISOString().split('T')[0];
-    document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
+    document.getElementById('dateTo').value   = localDateStr(today);
+    document.getElementById('dateFrom').value = localDateStr(from);
 }
 
 // ── 分類資料 ────────────────────────────────────────────────────
@@ -905,10 +913,10 @@ async function loadData() {
         const res = await fetch(`${API_BASE}/api/prices?t=${Date.now()}`);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         allData = await res.json();
-        // Always sync dateTo to today so entries with today's date are never excluded
-        const today = new Date().toISOString().split('T')[0];
+        // Always sync dateTo to today (local date) so today's entries are never excluded
+        const todayStr = localDateStr(new Date());
         const dateToEl = document.getElementById('dateTo');
-        if (dateToEl && dateToEl.value < today) dateToEl.value = today;
+        if (dateToEl && dateToEl.value < todayStr) dateToEl.value = todayStr;
         renderLatest();
         onFilterChange();
     } catch (err) {
