@@ -388,6 +388,16 @@
             background: rgba(79,125,60,0.15);
             color: var(--green);
         }
+        .source-pill.manual-pill {
+            background: rgba(90,100,200,0.15);
+            color: #5A5EC8;
+        }
+        tbody tr.manual-row {
+            background: rgba(90,100,200,0.04);
+        }
+        tbody tr.manual-row:hover {
+            background: rgba(90,100,200,0.10);
+        }
 
         /* ── Loading & empty states ──────────────────── */
         .loading-state, .empty-state {
@@ -498,6 +508,15 @@
                     <option value="all">全部</option>
                     <option value="futures">期貨 — ICE KC 阿拉比卡</option>
                     <option value="retail">零售 — 星巴克黃金烘焙豆</option>
+                </select>
+            </div>
+
+            <div class="control-group" style="margin-top:10px;">
+                <span class="control-label">資料來源</span>
+                <select id="sourceSelect" onchange="onFilterChange()">
+                    <option value="all">全部來源</option>
+                    <option value="manual">✍️ 手動輸入</option>
+                    <option value="scraper">🤖 爬蟲資料</option>
                 </select>
             </div>
 
@@ -649,16 +668,23 @@ function isFutures(row) {
 function isRetail(row) {
     return !isFutures(row);
 }
+function isManual(row) {
+    const s = (row.source || '').toLowerCase();
+    return s.includes('手動') || s.includes('manual') || s === '未指定' && !isFutures(row);
+}
 
 // ── 篩選邏輯 ────────────────────────────────────────────────────
 function getFilteredData() {
     const product  = document.getElementById('productSelect').value;
+    const srcFilter = document.getElementById('sourceSelect').value;
     const dateFrom = document.getElementById('dateFrom').value;
     const dateTo   = document.getElementById('dateTo').value;
 
     return allData.filter(row => {
         if (product === 'futures' && !isFutures(row)) return false;
         if (product === 'retail'  && !isRetail(row))  return false;
+        if (srcFilter === 'manual'  && !isManual(row))  return false;
+        if (srcFilter === 'scraper' &&  isManual(row))  return false;
         if (dateFrom && row.date < dateFrom) return false;
         if (dateTo   && row.date > dateTo)   return false;
         return true;
@@ -833,12 +859,23 @@ function renderTable(filtered) {
     let html = '';
     sorted.forEach(row => {
         const futures = isFutures(row);
+        const manual  = isManual(row);
         const priceStr = futures
             ? `${Number(row.price).toFixed(2)} <small style="opacity:.7;font-size:12px;">¢/lb</small>`
             : `NT$ ${Number(row.price).toLocaleString()}`;
-        const pillClass = futures ? 'futures-pill' : 'retail-pill';
-        const sourceTxt = futures ? (row.source || 'Barchart') : (row.source || 'Daybuy');
-        html += `<tr>
+        let pillClass, sourceTxt;
+        if (manual) {
+            pillClass = 'manual-pill';
+            sourceTxt = row.source || '手動輸入';
+        } else if (futures) {
+            pillClass = 'futures-pill';
+            sourceTxt = row.source || 'Barchart';
+        } else {
+            pillClass = 'retail-pill';
+            sourceTxt = row.source || 'Daybuy';
+        }
+        const rowClass = manual ? 'manual-row' : '';
+        html += `<tr class="${rowClass}">
             <td>${row.date}</td>
             <td style="color:var(--cream); max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escHtml(row.name)}">${escHtml(row.name)}</td>
             <td><span class="source-pill ${pillClass}">${escHtml(sourceTxt)}</span></td>
