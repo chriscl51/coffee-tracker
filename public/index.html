@@ -408,6 +408,61 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* ── Manual entry form ───────────────────────── */
+        .manual-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .manual-form input[type="text"],
+        .manual-form input[type="number"],
+        .manual-form input[type="date"] {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-mid);
+            border-radius: 6px;
+            color: var(--cream);
+            padding: 9px 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .manual-form input:focus {
+            border-color: var(--gold);
+        }
+        .manual-form input::placeholder {
+            color: var(--cream-dim);
+            opacity: 0.5;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .btn-submit:hover  { opacity: 0.88; }
+        .btn-submit:active { transform: scale(0.97); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+        .form-msg {
+            font-size: 12px;
+            text-align: center;
+            padding: 6px 0 0;
+            border-radius: 4px;
+            min-height: 20px;
+            transition: color 0.2s;
+        }
+        .form-msg.success { color: var(--green); }
+        .form-msg.error   { color: #c0392b; }
+
         @media (max-width: 900px) {
             .main { grid-template-columns: 1fr; }
             .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
@@ -464,6 +519,33 @@
             <div class="latest-card" id="latestCard">
                 <div class="loading-state"><div class="spinner"></div></div>
             </div>
+        </div>
+
+        <hr class="sidebar-divider">
+
+        <!-- ── 手動新增資料 ── -->
+        <div>
+            <div class="sidebar-section-label">手動新增資料</div>
+            <form class="manual-form" id="manualForm" onsubmit="submitManual(event)">
+                <div class="control-group">
+                    <span class="control-label">日期 *</span>
+                    <input type="date" id="mDate" required>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">名稱 *</span>
+                    <input type="text" id="mName" placeholder="例：ICE KC 阿拉比卡" required>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">價格 *</span>
+                    <input type="number" id="mPrice" placeholder="例：350" step="any" required>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">來源</span>
+                    <input type="text" id="mSource" placeholder="例：手動輸入">
+                </div>
+                <button type="submit" class="btn-submit" id="mSubmitBtn">＋ 新增紀錄</button>
+                <div class="form-msg" id="formMsg"></div>
+            </form>
         </div>
     </aside>
 
@@ -791,6 +873,60 @@ function onFilterChange() {
     const filtered = getFilteredData();
     renderChart(filtered);
     renderTable(filtered);
+}
+
+// ── 手動新增資料表單 ──────────────────────────────────────────
+async function submitManual(e) {
+    e.preventDefault();
+    const btn    = document.getElementById('mSubmitBtn');
+    const msgEl  = document.getElementById('formMsg');
+    const date   = document.getElementById('mDate').value.trim();
+    const name   = document.getElementById('mName').value.trim();
+    const price  = document.getElementById('mPrice').value.trim();
+    const source = document.getElementById('mSource').value.trim() || '手動輸入';
+
+    if (!date || !name || !price) {
+        showFormMsg('請填寫所有必填欄位', 'error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '新增中…';
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+
+    try {
+        const res = await fetch(`${API_BASE}/api/prices/manual`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, name, price: Number(price), source })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || '新增失敗');
+
+        showFormMsg(`✅ 已新增（ID: ${data.id}）`, 'success');
+        document.getElementById('manualForm').reset();
+        // 重新載入資料
+        await loadData();
+    } catch (err) {
+        showFormMsg('❌ ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '＋ 新增紀錄';
+    }
+}
+
+function showFormMsg(text, type) {
+    const el = document.getElementById('formMsg');
+    el.textContent = text;
+    el.className = `form-msg ${type}`;
+    // 5 秒後自動清除
+    setTimeout(() => {
+        if (el.textContent === text) {
+            el.textContent = '';
+            el.className = 'form-msg';
+        }
+    }, 5000);
 }
 
 // ── 啟動 ────────────────────────────────────────────────────────

@@ -106,7 +106,32 @@ app.post('/api/prices', requireApiKey, (req, res) => {
     });
 });
 
-// ── SPA fallback ──────────────────────────────────────────────────
+// ── POST /api/prices/manual ───────────────────────────────────
+// 供前端使用者手動新增，無需 API Key
+app.post('/api/prices/manual', (req, res) => {
+    const { date, name, price, source } = req.body;
+
+    if (!date || !name || price == null) {
+        return res.status(400).json({ error: 'date、name、price 為必填欄位' });
+    }
+    if (isNaN(Number(price))) {
+        return res.status(400).json({ error: 'price 必須是數字' });
+    }
+
+    const sql = 'INSERT INTO prices (date, name, price, source) VALUES (?, ?, ?, ?)';
+    db.run(sql, [
+        String(date).trim(),
+        String(name).trim(),
+        Number(price),
+        String(source || '手動輸入').trim()
+    ], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        console.log(`✍️  手動寫入 [id=${this.lastID}] ${date} | ${name} | ${price} | ${source || '手動輸入'}`);
+        res.status(201).json({ id: this.lastID, message: '新增成功' });
+    });
+});
+
+// ── SPA fallback ──────────────────────────────────────────────
 // ── SPA fallback ──────────────────────────────────────────────────
 app.get('/{*splat}', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
